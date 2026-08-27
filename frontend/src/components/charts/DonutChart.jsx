@@ -3,10 +3,12 @@
  * DESIGN.md §4.3 donut spec.
  */
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { useLanguage } from "../../context/LanguageContext";
 
 const DEFAULT_COLORS = ["#22C55E", "#F59E0B", "#EF4444", "#8B5CF6", "#3B82F6"];
 
 function CustomLegend({ payload }) {
+  const { t } = useLanguage();
   return (
     <ul className="space-y-1.5 mt-3">
       {payload.map((entry, i) => (
@@ -15,7 +17,7 @@ function CustomLegend({ payload }) {
             className="w-3 h-3 rounded-full flex-shrink-0"
             style={{ background: entry.color }}
           />
-          <span className="text-gray-600 truncate flex-1">{entry.value}</span>
+          <span className="text-gray-600 truncate flex-1">{t(entry.value)}</span>
           <span className="font-semibold text-gray-800 tabular-nums ml-auto">
             {entry.payload.value}
           </span>
@@ -29,13 +31,14 @@ function CustomLegend({ payload }) {
 }
 
 function CustomTooltip({ active, payload }) {
+  const { t } = useLanguage();
   if (!active || !payload?.length) return null;
   const entry = payload[0];
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-xs">
       <p className="font-semibold text-gray-800">{entry.name}</p>
       <p className="text-gray-600 mt-0.5">
-        Count: <span className="font-bold text-gray-900">{entry.value}</span>
+        {t("Count")}: <span className="font-bold text-gray-900">{entry.value}</span>
       </p>
     </div>
   );

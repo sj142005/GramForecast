@@ -205,7 +205,7 @@ class Forecast(Base):
     confidence_level = Column(Numeric(5, 2))
     festival_name    = Column(String(100))
     festival_impact_pct = Column(Numeric(7, 2), default=0)
-    model_version    = Column(String(50), default="prophet_v1")
+    model_version    = Column(String(50), default="holtwinters_v1")
     run_at           = Column(DateTime(timezone=True), default=datetime.utcnow)
 
     product = relationship("Product", back_populates="forecasts")

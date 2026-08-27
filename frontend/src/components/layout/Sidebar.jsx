@@ -44,7 +44,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <button 
           onClick={onClose}
           className="lg:hidden p-2 -mr-2 text-white/70 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
-          aria-label="Close Sidebar"
+          aria-label={t("Close Sidebar")}
         >
           <X className="w-5 h-5" />
         </button>
@@ -75,7 +75,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <span className="text-green-200 text-xs font-semibold">{t("Did you know?")}</span>
         </div>
         <p className="text-green-100/70 text-xs leading-relaxed">
-          Businesses using AI forecasting reduce stockouts by up to 30% in the first season.
+          {t("Businesses using AI forecasting reduce stockouts by up to 30% in the first season.")}
         </p>
       </div>
     </aside>

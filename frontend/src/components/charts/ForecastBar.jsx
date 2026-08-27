@@ -6,19 +6,20 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ErrorBar,
 } from "recharts";
-import { format, parseISO } from "date-fns";
+import { useLanguage } from "../../context/LanguageContext";
 
 function CustomTooltip({ active, payload, label }) {
+  const { language, t } = useLanguage();
   if (!active || !payload?.length) return null;
   const item = payload[0];
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-xs">
       <p className="font-semibold text-gray-700 mb-1">
-        {label ? format(parseISO(label), "EEEE, d MMM") : ""}
+        {label ? new Date(label).toLocaleDateString(language === "mr" ? "mr-IN" : language === "hi" ? "hi-IN" : "en-IN", { weekday: "long", day: "numeric", month: "short" }) : ""}
       </p>
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-brand-mid" />
-        <span className="text-gray-600">Forecast:</span>
+        <span className="text-gray-600">{t("Forecast:")}</span>
         <span className="font-bold text-gray-900 tabular-nums">
           {Number(item?.value || 0).toFixed(1)}
         </span>
@@ -28,6 +29,7 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function ForecastBar({ data = [], height = 200 }) {
+  const { language, t } = useLanguage();
   const enriched = data.map((d) => ({
     ...d,
     error: d.upper != null && d.lower != null ? [d.predicted - d.lower, d.upper - d.predicted] : undefined,
@@ -46,7 +48,7 @@ export default function ForecastBar({ data = [], height = 200 }) {
         <XAxis
           dataKey="date"
           tick={{ fontSize: 11, fill: "#9CA3AF" }}
-          tickFormatter={(d) => { try { return format(parseISO(d), "EEE d"); } catch { return d; } }}
+          tickFormatter={(d) => { try { return new Date(d).toLocaleDateString(language === "mr" ? "mr-IN" : language === "hi" ? "hi-IN" : "en-IN", { weekday: "short", day: "numeric" }); } catch { return d; } }}
           tickLine={false}
           axisLine={false}
         />
@@ -57,7 +59,7 @@ export default function ForecastBar({ data = [], height = 200 }) {
           width={36}
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "#F0FDF4" }} />
-        <Bar dataKey="predicted" fill="url(#barGrad)" radius={[6, 6, 0, 0]} name="Forecast">
+        <Bar dataKey="predicted" fill="url(#barGrad)" radius={[6, 6, 0, 0]} name={t("Forecast")}>
           {enriched[0]?.error && (
             <ErrorBar dataKey="error" width={4} strokeWidth={2} stroke="#14532D" />
           )}

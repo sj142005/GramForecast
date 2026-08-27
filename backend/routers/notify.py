@@ -2,7 +2,7 @@
 
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -15,7 +15,7 @@ from whatsapp_service import send_whatsapp
 router = APIRouter()
 
 
-def compose_daily_digest(db: Session, business_id) -> str:
+def compose_daily_digest(db: Session, business_id, language: str = "en") -> str:
     """Compose the exact message used both for Twilio and the preview bubble."""
     try:
         ensure_forecasts(db, business_id)
@@ -57,24 +57,32 @@ def compose_daily_digest(db: Session, business_id) -> str:
     ]
     signal = db.query(models.MarketSignal).order_by(models.MarketSignal.signal_date.desc()).first()
     market_note = (
-        f"📈 {signal.category}: मांग सूचकांक {float(signal.demand_index or 0):.0f}, भाव ₹{float(signal.price or 0):.0f}।"
-        if signal else "🎉 त्योहार का मौसम: जरूरी सामान का स्टॉक रखें।"
+        f"📈 {signal.category}: {'मागणी निर्देशांक' if language == 'mr' else 'मांग सूचकांक'} {float(signal.demand_index or 0):.0f}, भाव ₹{float(signal.price or 0):.0f}।"
+        if signal else ("🎉 सणाचा हंगाम: आवश्यक वस्तूंचा साठा ठेवा." if language == "mr" else "🎉 त्योहार का मौसम: जरूरी सामान का स्टॉक रखें।")
     )
 
-    lines = ["🙏 नमस्ते! आज की दुकान योजना", "", "🛒 इस सप्ताह मंगाएं:"]
-    lines.extend(f"• {item}" for item in restock[:3]) or lines.append("• अभी अतिरिक्त ऑर्डर जरूरी नहीं है।")
-    lines.extend(["", "⚠️ कम / खत्म स्टॉक:"])
-    lines.extend(f"• {item}" for item in low_items[:8]) or lines.append("• कोई नहीं")
-    lines.extend(["", market_note, "", "Kirana Sahayak"])
+    if language == "mr":
+        lines = ["🙏 नमस्कार! आजचा दुकानाचा आराखडा", "", "🛒 या आठवड्यात मागवा:"]
+        lines.extend(f"• {item}" for item in restock[:3]) or lines.append("• सध्या अतिरिक्त ऑर्डर आवश्यक नाही.")
+        lines.extend(["", "⚠️ कमी / संपलेला साठा:"])
+        lines.extend(f"• {item}" for item in low_items[:8]) or lines.append("• काहीही नाही")
+        lines.extend(["", market_note, "", "किराणा सहाय्यक"])
+    else:
+        lines = ["🙏 नमस्ते! आज की दुकान योजना", "", "🛒 इस सप्ताह मंगाएं:"]
+        lines.extend(f"• {item}" for item in restock[:3]) or lines.append("• अभी अतिरिक्त ऑर्डर जरूरी नहीं है।")
+        lines.extend(["", "⚠️ कम / खत्म स्टॉक:"])
+        lines.extend(f"• {item}" for item in low_items[:8]) or lines.append("• कोई नहीं")
+        lines.extend(["", market_note, "", "Kirana Sahayak"])
     return "\n".join(lines)
 
 
 @router.post("/whatsapp/daily")
 def send_daily_whatsapp(
+    language: str = Query("en", pattern="^(en|hi|mr)$"),
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    message = compose_daily_digest(db, current_user.business_id)
+    message = compose_daily_digest(db, current_user.business_id, language)
     sent = send_whatsapp(current_user.mobile, message)
     return {
         "sent": sent,

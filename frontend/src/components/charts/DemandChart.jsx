@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from "recharts";
-import { format, parseISO } from "date-fns";
+import { useLanguage } from "../../context/LanguageContext";
 
 const COLORS = {
   actual:    "#16A34A",
@@ -15,18 +15,19 @@ const COLORS = {
 };
 
 function CustomTooltip({ active, payload, label }) {
+  const { language, t } = useLanguage();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-xs">
       <p className="font-semibold text-gray-700 mb-2">
-        {label ? format(parseISO(label), "dd MMM yyyy") : ""}
+        {label ? new Date(label).toLocaleDateString(language === "mr" ? "mr-IN" : language === "hi" ? "hi-IN" : "en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}
       </p>
       {payload.map((entry) => {
         if (entry.name === "band") return null;
         return (
           <div key={entry.name} className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: entry.color }} />
-            <span className="text-gray-600 capitalize">{entry.name}:</span>
+            <span className="text-gray-600 capitalize">{t(entry.name)}:</span>
             <span className="font-bold text-gray-900 tabular-nums">
               {entry.value != null ? Number(entry.value).toFixed(1) : "—"}
             </span>
@@ -38,6 +39,7 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function DemandChart({ data = [], height = 280, showLegend = true }) {
+  const { language, t } = useLanguage();
   // Find the split point between historical and future
   const today = new Date().toISOString().split("T")[0];
   const splitDate = data.find((d) => d.date >= today)?.date;
@@ -56,7 +58,7 @@ export default function DemandChart({ data = [], height = 280, showLegend = true
         <XAxis
           dataKey="date"
           tick={{ fontSize: 11, fill: "#9CA3AF" }}
-          tickFormatter={(d) => { try { return format(parseISO(d), "d MMM"); } catch { return d; } }}
+          tickFormatter={(d) => { try { return new Date(d).toLocaleDateString(language === "mr" ? "mr-IN" : language === "hi" ? "hi-IN" : "en-IN", { day: "numeric", month: "short" }); } catch { return d; } }}
           tickLine={false}
           axisLine={false}
           interval="preserveStartEnd"
@@ -72,7 +74,7 @@ export default function DemandChart({ data = [], height = 280, showLegend = true
         {showLegend && (
           <Legend
             wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-            formatter={(value) => <span className="text-gray-600 capitalize">{value}</span>}
+            formatter={(value) => <span className="text-gray-600 capitalize">{t(value)}</span>}
           />
         )}
 
@@ -129,7 +131,7 @@ export default function DemandChart({ data = [], height = 280, showLegend = true
             x={splitDate}
             stroke="#D1D5DB"
             strokeDasharray="4 4"
-            label={{ value: "Today", position: "insideTopRight", fontSize: 10, fill: "#9CA3AF" }}
+            label={{ value: t("Today"), position: "insideTopRight", fontSize: 10, fill: "#9CA3AF" }}
           />
         )}
       </ComposedChart>

@@ -5,9 +5,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 
 const STARTERS = [
-  "Is hafte kya order karu?",
-  "Kaunsa product sabse zyada bikega?",
-  "Kya kam stock mein hai?",
+  "What should I order this week?",
+  "Which product will sell the most?",
+  "Which products are low in stock?",
 ];
 
 export default function KiranaSahayak() {
@@ -37,7 +37,7 @@ export default function KiranaSahayak() {
       const response = await sendAssistantMessage(message, language);
       setMessages((current) => [...current, { role: "assistant", text: response.reply }]);
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "Assistant is unavailable right now.");
+      setError(requestError.response?.data?.detail || t("Assistant is unavailable right now."));
     } finally {
       setSending(false);
     }
@@ -51,8 +51,8 @@ export default function KiranaSahayak() {
             <div className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15"><Bot className="h-5 w-5" /></span>
               <div>
-                <h2 className="text-sm font-bold">Kirana Sahayak</h2>
-                <p className="text-[11px] text-green-100">Your shop assistant</p>
+                <h2 className="text-sm font-bold">{t("Kirana Sahayak")}</h2>
+                <p className="text-[11px] text-green-100">{t("Your shop assistant")}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -60,9 +60,9 @@ export default function KiranaSahayak() {
                 type="button"
                 onClick={() => setLanguage((current) => current === "en" ? "hi" : current === "hi" ? "mr" : "en")}
                 className="rounded-lg px-2 py-1 text-xs font-semibold text-green-50 hover:bg-white/10"
-                aria-label="Change assistant language"
+                aria-label={t("Change assistant language")}
               >{language === "en" ? "हिंदी" : language === "hi" ? "मराठी" : "EN"}</button>
-              <button type="button" onClick={() => setIsOpen(false)} className="rounded-lg p-2 hover:bg-white/10" aria-label="Close assistant">
+              <button type="button" onClick={() => setIsOpen(false)} className="rounded-lg p-2 hover:bg-white/10" aria-label={t("Close assistant")}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -88,16 +88,16 @@ export default function KiranaSahayak() {
 
           {messages.length === 0 && (
             <div className="flex gap-2 overflow-x-auto border-t border-gray-100 px-3 py-2">
-              {STARTERS.map((starter) => <button key={starter} type="button" onClick={() => submit(starter)} className="shrink-0 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-100">{starter}</button>)}
+              {STARTERS.map((starter) => <button key={starter} type="button" onClick={() => submit(starter)} className="shrink-0 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-100">{t(starter)}</button>)}
             </div>
           )}
           <form onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex items-center gap-2 border-t border-gray-100 bg-white p-3">
-            <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={t("Ask Kirana Sahayak...")} className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-brand-mid focus:ring-2 focus:ring-green-100" aria-label="Message Kirana Sahayak" />
-            <button type="submit" disabled={!draft.trim() || sending} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-mid text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message"><Send className="h-4 w-4" /></button>
+            <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={t("Ask Kirana Sahayak...")} className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-brand-mid focus:ring-2 focus:ring-green-100" aria-label={t("Message Kirana Sahayak")} />
+            <button type="submit" disabled={!draft.trim() || sending} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-mid text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40" aria-label={t("Send message")}><Send className="h-4 w-4" /></button>
           </form>
         </section>
       )}
-      <button type="button" onClick={() => setIsOpen((current) => !current)} className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-mid text-white shadow-lg transition-transform hover:scale-105 hover:bg-brand-dark" aria-label={isOpen ? "Close Kirana Sahayak" : "Open Kirana Sahayak"}>
+      <button type="button" onClick={() => setIsOpen((current) => !current)} className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-mid text-white shadow-lg transition-transform hover:scale-105 hover:bg-brand-dark" aria-label={t(isOpen ? "Close Kirana Sahayak" : "Open Kirana Sahayak")}>
         {isOpen ? <ChevronDown className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
       </button>
     </div>

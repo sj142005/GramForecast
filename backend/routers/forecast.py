@@ -76,6 +76,7 @@ def get_all_product_forecasts(
     return {
         "products": sorted(results, key=lambda x: -x["total_7d"]),
         "overall_accuracy_pct": overall,
+        "forecast_method": "seasonal time-series forecasting (Holt-Winters)",
     }
 
 
@@ -85,7 +86,7 @@ def trigger_forecast_run(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Run Prophet for this business and wait until forecasts are stored."""
+    """Run forecast for this business and wait until forecasts are stored."""
     if str(current_user.business_id) != business_id:
         raise HTTPException(status_code=403, detail="Not authorized")
     try:
@@ -289,6 +290,7 @@ def get_product_forecast(
             "model": backtest.get("model"),
             "points": backtest.get("points", []),
         },
+        "forecast_method": "seasonal time-series forecasting (Holt-Winters)",
         "forecast_bar":        [
             {
                 "date":      str(f.forecast_date),

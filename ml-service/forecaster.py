@@ -1,14 +1,15 @@
 """
-RuralDemand AI — Prophet/SARIMA Forecasting Service
-=====================================================
-Loads sales data from PostgreSQL, fits a Prophet model per product,
+RuralDemand AI — Seasonal Time-Series Forecasting Service (Holt-Winters)
+=======================================================================
+Loads sales data from PostgreSQL, fits a Holt-Winters model per product,
 generates 7-day forward forecasts, and writes results back to the
 `forecasts` table.
 
 Features:
-  - Facebook Prophet as primary model (handles seasonality, holidays)
-    Indian festival calendar as custom holidays
-  - Falls back to Holt-Winters (statsmodels) if Prophet fails
+  - Holt-Winters (statsmodels) as the production forecaster (handles trend
+    and weekly seasonality with festival uplift)
+  - Facebook Prophet is optional and only available behind the
+    FORECASTER_USE_PROPHET flag for local/dev environments
   - Writes confidence intervals to DB
   - MAPE backtest on a held-out 7–14 day window → accuracy % (100 − MAPE)
 """
@@ -34,7 +35,8 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 
 FORECAST_HORIZON = 7  # days
 BACKTEST_DAYS    = 14
-MODEL_VERSION    = "prophet_v2_festival"
+MODEL_VERSION    = "holtwinters_v1_festival"
+USE_PROPHET      = os.getenv("FORECASTER_USE_PROPHET", "false").lower() in {"1", "true", "yes"}
 
 # Hindu lunar dates are explicit for supported forecast years. Season windows
 # are modeled as holidays so Prophet's contribution remains explainable.
@@ -132,7 +134,7 @@ def fit_prophet(df: pd.DataFrame, category: Optional[str] = None) -> Optional[ob
         model.fit(df, **fit_kwargs)
         return model
     except Exception as e:
-        logger.warning(f"Prophet failed: {e}")
+        logger.info("Prophet not enabled; using Holt-Winters: %s", e)
         return None
 
 
@@ -192,6 +194,8 @@ def fit_holtwinters(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
         preds = pd.Series([avg] * horizon, index=future_dates)
 
     values = np.asarray(preds, dtype=float).clip(0)
+    series_mean = float(series.mean()) if len(series) > 0 else 0.0
+    values = np.where(values == 0, max(series_mean, 0.1), values)
     return pd.DataFrame({
         "ds":         future_dates,
         "yhat":       values,
@@ -256,7 +260,7 @@ def backtest_mape(df: pd.DataFrame, category: Optional[str] = None) -> tuple[Opt
         return None, "insufficient_train"
 
     model_used = "holtwinters"
-    bt_model = fit_prophet(train_df, category)
+    bt_model = fit_prophet(train_df, category) if USE_PROPHET else None
     if bt_model:
         future = pd.DataFrame({"ds": pd.to_datetime(holdout["ds"])})
         fc_eval = bt_model.predict(future)
@@ -283,7 +287,7 @@ def backtest_series(df: pd.DataFrame, category: Optional[str] = None) -> dict:
         return {"accuracy_pct": 0.0, "mape_pct": None, "model": "insufficient_data", "points": []}
 
     model_used = "holtwinters"
-    model = fit_prophet(train_df, category)
+    model = fit_prophet(train_df, category) if USE_PROPHET else None
     if model:
         predicted = model.predict(pd.DataFrame({"ds": pd.to_datetime(holdout["ds"])}))["yhat"].clip(lower=0).tolist()
         model_used = "prophet"
@@ -425,14 +429,14 @@ def run_forecasts_for_business(business_id: str):
         accuracy = mape_to_accuracy(mape)
 
         model_used = "holtwinters"
-        full_model = fit_prophet(df, category)
+        full_model = fit_prophet(df, category) if USE_PROPHET else None
         if full_model:
             # Always anchor on the business-level max sale date, not df["ds"].max(),
             # so every product covers the identical 7-day window.
             preds = predict_prophet(full_model, forecast_anchor, FORECAST_HORIZON)
             model_used = "prophet"
         else:
-            logger.info(f"  Falling back to Holt-Winters for {pname}")
+            logger.info(f"  Using seasonal Holt-Winters for {pname}")
             preds = fit_holtwinters(df, FORECAST_HORIZON)
             model_used = "holtwinters"
             # Re-anchor HW output to the business window as well

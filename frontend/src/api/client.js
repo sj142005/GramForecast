@@ -97,10 +97,16 @@ export const fetchInventoryPlanning = () =>
 
 // ─── Alerts ────────────────────────────────────────────────────────────────
 export const fetchAlerts = (language = "en") =>
-  api.get(`/alerts/?language=${language}`).then((r) => r.data);
+  api.get(`/alerts/?language=${language}&resolved=true`).then((r) => r.data);
 
-export const sendDailyWhatsapp = () =>
-  api.post("/notify/whatsapp/daily", {}, { timeout: 30000 }).then((r) => r.data);
+export const acknowledgeAlert = (alertId) =>
+  api.patch(`/alerts/${alertId}`).then((r) => r.data);
+
+export const markAllAlertsRead = () =>
+  api.post("/alerts/mark-all-read").then((r) => r.data);
+
+export const sendDailyWhatsapp = (language = "en") =>
+  api.post(`/notify/whatsapp/daily?language=${language}`, {}, { timeout: 30000 }).then((r) => r.data);
 
 export const fetchSettings = () => api.get("/settings/").then((r) => r.data);
 export const updateSettings = (settings) => api.patch("/settings/", settings).then((r) => r.data);

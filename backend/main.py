@@ -17,6 +17,7 @@ from config import settings
 from database import engine, Base
 from sqlalchemy import text
 from routers import auth, dashboard, forecast, products, sales, inventory, alerts, market, ai, assistant, notify, credit, settings as settings_router
+from llm_client import _is_model_access_error, create_chat_completion
 
 
 @asynccontextmanager
@@ -38,8 +39,18 @@ async def lifespan(app: FastAPI):
                 END IF;
             END $$;
         """))
+    if settings.GROQ_API_KEY:
+        try:
+            create_chat_completion(messages=[{"role": "user", "content": "hi"}], max_tokens=1)
+        except Exception as exc:
+            if _is_model_access_error(exc):
+                logger.warning(
+                    "Startup Groq model '%s' inaccessible: %s. Fallback '%s' will be used on first call.",
+                    settings.GROQ_MODEL,
+                    exc,
+                    settings.GROQ_FALLBACK_MODEL,
+                )
     yield
-
 
 app = FastAPI(
     title="RuralDemand AI API",

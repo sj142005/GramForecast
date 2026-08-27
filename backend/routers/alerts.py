@@ -1,6 +1,8 @@
 """Alerts router."""
 
-from fastapi import APIRouter, Depends, Query
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 import models
@@ -54,3 +56,51 @@ def list_alerts(
         }
         for a in alerts
     ]
+
+
+@router.patch("/{alert_id}")
+def acknowledge_alert(
+    alert_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    alert = (
+        db.query(models.Alert)
+        .filter(
+            models.Alert.id == alert_id,
+            models.Alert.business_id == current_user.business_id,
+        )
+        .first()
+    )
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    alert.is_read = True
+    alert.resolved_at = alert.resolved_at or datetime.utcnow()
+    db.commit()
+    return {
+        "id": str(alert.id),
+        "is_read": alert.is_read,
+        "resolved_at": str(alert.resolved_at),
+    }
+
+
+@router.post("/mark-all-read")
+def mark_all_alerts_read(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    alerts = (
+        db.query(models.Alert)
+        .filter(
+            models.Alert.business_id == current_user.business_id,
+            models.Alert.resolved_at.is_(None),
+        )
+        .all()
+    )
+    resolved_at = datetime.utcnow()
+    for alert in alerts:
+        alert.is_read = True
+        alert.resolved_at = resolved_at
+    db.commit()
+    return {"updated": len(alerts)}

@@ -30,13 +30,13 @@ export default function Signup() {
 
   const validate = (values) => {
     const nextErrors = {};
-    if (!values.business_name.trim()) nextErrors.business_name = "Business name is required.";
-    if (!values.owner_name.trim()) nextErrors.owner_name = "Owner name is required.";
-    if (!/^[6-9]\d{9}$/.test(values.mobile.trim())) nextErrors.mobile = "Enter a valid 10-digit Indian mobile number starting with 6-9.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) nextErrors.email = "Enter a valid email address.";
-    if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(values.password)) nextErrors.password = "Password must be at least 8 characters with at least 1 letter and 1 number.";
-    if (!values.business_category.trim()) nextErrors.business_category = "Business category is required.";
-    if (!values.location.trim()) nextErrors.location = "Location is required.";
+    if (!values.business_name.trim()) nextErrors.business_name = t("Business name is required.");
+    if (!values.owner_name.trim()) nextErrors.owner_name = t("Owner name is required.");
+    if (!/^[6-9]\d{9}$/.test(values.mobile.trim())) nextErrors.mobile = t("Enter a valid 10-digit Indian mobile number starting with 6-9.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) nextErrors.email = t("Enter a valid email address.");
+    if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(values.password)) nextErrors.password = t("Password must be at least 8 characters with at least 1 letter and 1 number.");
+    if (!values.business_category.trim()) nextErrors.business_category = t("Business category is required.");
+    if (!values.location.trim()) nextErrors.location = t("Location is required.");
     return nextErrors;
   };
 
@@ -69,7 +69,7 @@ export default function Signup() {
       setSuccess(true);
       setTimeout(() => navigate("/"), 500);
     } catch (err) {
-      setError(err.response?.data?.detail || "Unable to create your account right now.");
+      setError(err.response?.data?.detail || t("Unable to create your account right now."));
     } finally {
       setLoading(false);
     }
@@ -84,8 +84,8 @@ export default function Signup() {
               <Leaf className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-bold text-lg">Create your RuralDemand AI account</p>
-              <p className="text-green-100 text-xs">Set up your business profile in under a minute.</p>
+              <p className="font-bold text-lg">{t("Create your RuralDemand AI account")}</p>
+              <p className="text-green-100 text-xs">{t("Set up your business profile in under a minute.")}</p>
             </div>
           </div>
         </div>
@@ -101,52 +101,52 @@ export default function Signup() {
           {success && (
             <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-green-700 text-sm">
               <CheckCircle className="w-4 h-4 flex-shrink-0" />
-              Account created. Redirecting to dashboard...
+              {t("Account created. Redirecting to dashboard...")}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Business Name</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Business Name")}</label>
               <input name="business_name" value={form.business_name} onChange={handleChange} required aria-invalid={!!fieldErrors.business_name} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white" />
               {fieldErrors.business_name && <p className="mt-1 text-xs text-red-600">{t(fieldErrors.business_name)}</p>}
             </div>
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Owner Name</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Owner Name")}</label>
               <input name="owner_name" value={form.owner_name} onChange={handleChange} required aria-invalid={!!fieldErrors.owner_name} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white" />
               {fieldErrors.owner_name && <p className="mt-1 text-xs text-red-600">{t(fieldErrors.owner_name)}</p>}
             </div>
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Mobile Number</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Mobile Number")}</label>
               <input name="mobile" value={form.mobile.replace(/^\+91/, "")} onChange={(e) => handleChange({ target: { name: "mobile", value: e.target.value.replace(/\D/g, "") } })} required inputMode="numeric" maxLength={10} aria-invalid={!!fieldErrors.mobile} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white" />
               {fieldErrors.mobile && <p className="mt-1 text-xs text-red-600">{t(fieldErrors.mobile)}</p>}
             </div>
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Email</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Email")}</label>
               <input type="email" name="email" value={form.email} onChange={handleChange} required aria-invalid={!!fieldErrors.email} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white" />
               {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{t(fieldErrors.email)}</p>}
             </div>
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Business Category</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Business Category")}</label>
               <select name="business_category" value={form.business_category} onChange={handleChange} aria-invalid={!!fieldErrors.business_category} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white">
-                <option value="kirana_store">Kirana Store</option>
-                <option value="oil_mill">Oil Mill</option>
-                <option value="flour_mill">Flour Mill</option>
-                <option value="spice_trader">Spice Trader</option>
-                <option value="dairy">Dairy</option>
-                <option value="handicraft">Handicraft</option>
+                <option value="kirana_store">{t("Kirana Store")}</option>
+                <option value="oil_mill">{t("Oil Mill")}</option>
+                <option value="flour_mill">{t("Flour Mill")}</option>
+                <option value="spice_trader">{t("Spice Trader")}</option>
+                <option value="dairy">{t("Dairy")}</option>
+                <option value="handicraft">{t("Handicraft")}</option>
               </select>
               {fieldErrors.business_category && <p className="mt-1 text-xs text-red-600">{t(fieldErrors.business_category)}</p>}
             </div>
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Location</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Location")}</label>
               <input name="location" value={form.location} onChange={handleChange} required aria-invalid={!!fieldErrors.location} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white" />
               {fieldErrors.location && <p className="mt-1 text-xs text-red-600">{t(fieldErrors.location)}</p>}
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-700 text-xs font-semibold mb-1.5">Password</label>
+            <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Password")}</label>
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
@@ -169,7 +169,7 @@ export default function Signup() {
           </button>
 
           <p className="text-center text-gray-400 text-xs">
-            Already have an account? <Link to="/login" className="text-brand-mid font-semibold hover:underline">Sign in</Link>
+            {t("Already have an account?")} <Link to="/login" className="text-brand-mid font-semibold hover:underline">{t("Sign in")}</Link>
           </p>
         </form>
       </div>

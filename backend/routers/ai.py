@@ -7,12 +7,12 @@ from threading import Lock
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from groq import Groq
 from pydantic import BaseModel
 
 import models
 from auth_utils import get_current_user
 from config import settings
+from llm_client import create_chat_completion
 
 router = APIRouter()
 
@@ -22,7 +22,7 @@ SYSTEM_PROMPT = (
     "in the tone of a helpful advisor, no jargon."
 )
 
-_insight_cache: dict[str, tuple[datetime, str]] = {}
+_insight_cache: dict[str, tuple[datetime, str, str]] = {}
 _cache_lock = Lock()
 
 
@@ -35,6 +35,7 @@ class InsightsRequest(BaseModel):
 
 class InsightsResponse(BaseModel):
     insight: str
+    model: str = ""
 
 
 def _cache_key(business_id: Any, request: InsightsRequest) -> str:
@@ -63,14 +64,12 @@ def generate_insight(
     with _cache_lock:
         cached = _insight_cache.get(key)
         if cached and cached[0] > now:
-            return InsightsResponse(insight=cached[1])
+            return InsightsResponse(insight=cached[1], model=cached[2])
         _insight_cache.pop(key, None)
 
-    client = Groq(api_key=settings.GROQ_API_KEY)
     context = json.dumps(request.model_dump(), sort_keys=True, default=str)
     try:
-        completion = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
+        completion, model_used = create_chat_completion(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT + (" Reply in simple Marathi (Devanagari)." if request.language == "mr" else " Reply in simple Hindi (Devanagari)." if request.language == "hi" else " Reply in English.")},
                 {"role": "user", "content": f"Business data:\n{context}"},
@@ -94,5 +93,5 @@ def generate_insight(
 
     expires_at = now + timedelta(seconds=settings.AI_INSIGHTS_CACHE_TTL_SECONDS)
     with _cache_lock:
-        _insight_cache[key] = (expires_at, insight)
-    return InsightsResponse(insight=insight)
+        _insight_cache[key] = (expires_at, insight, model_used)
+    return InsightsResponse(insight=insight, model=model_used)

@@ -304,11 +304,28 @@ def dashboard_summary(
     )
 
     if top_alert:
-        alert_message = top_alert.message
         if language == "mr":
-            alert_message = f"तातडीचे लक्ष द्या: {top_alert.message}"
+            alert_messages = {
+                "out_of_stock": f"{top_alert.product.name if top_alert.product else 'उत्पादन'} चा साठा संपला आहे. त्वरित भरपाई करा.",
+                "low_stock": f"{top_alert.product.name if top_alert.product else 'उत्पादन'} चा साठा सुरक्षा पातळीखाली आहे. ऑर्डर करण्याची शिफारस.",
+                "high_demand_forecast": f"{top_alert.product.name if top_alert.product else 'उत्पादनाची'} मागणी पुढील आठवड्यात वाढण्याची शक्यता आहे.",
+                "price_increase": f"{top_alert.product.name if top_alert.product else 'उत्पादनाचा'} घाऊक भाव या आठवड्यात वाढला आहे.",
+                "weather_risk": "पुढील ३ दिवस हलका पाऊस अपेक्षित आहे. पीठ कोरड्या जागी ठेवा.",
+                "forecast_updated": "अलीकडील विक्रीच्या आधारे AI मागणी मॉडेल अपडेट केले आहे.",
+            }
+            alert_message = f"तातडीचे लक्ष द्या: {alert_messages.get(top_alert.type.value, top_alert.message)}"
         elif language == "hi":
-            alert_message = f"तत्काल ध्यान दें: {top_alert.message}"
+            alert_messages = {
+                "out_of_stock": f"{top_alert.product.name if top_alert.product else 'उत्पाद'} का स्टॉक खत्म है। तुरंत भरें।",
+                "low_stock": f"{top_alert.product.name if top_alert.product else 'उत्पाद'} का स्टॉक सुरक्षा स्तर से कम है। ऑर्डर करने की सलाह।",
+                "high_demand_forecast": f"{top_alert.product.name if top_alert.product else 'उत्पाद की'} मांग अगले सप्ताह बढ़ने की संभावना है।",
+                "price_increase": f"{top_alert.product.name if top_alert.product else 'उत्पाद का'} थोक भाव इस सप्ताह बढ़ा है।",
+                "weather_risk": "अगले 3 दिनों में हल्की बारिश का अनुमान है। आटा सूखी जगह रखें।",
+                "forecast_updated": "AI मांग मॉडल को हाल की बिक्री के आधार पर अपडेट किया गया है।",
+            }
+            alert_message = f"तत्काल ध्यान दें: {alert_messages.get(top_alert.type.value, top_alert.message)}"
+        else:
+            alert_message = top_alert.message
         ai_recommendation = {
             "headline": alert_message,
             "detail":   "मागणी वाढण्यापूर्वी किंवा साठा संपण्यापूर्वी या सूचनेवर कृती करा." if language == "mr" else "अगली मांग बढ़ने या स्टॉक खत्म होने से पहले इस अलर्ट पर कार्रवाई करें।" if language == "hi" else "Review the alert and act before the next demand spike or stockout window.",

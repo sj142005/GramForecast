@@ -83,8 +83,8 @@ export default function DemandPrediction() {
 
   return (
     <AppShell
-      title="Demand Prediction"
-      description="AI-powered 7-day demand forecast with confidence intervals and prediction drivers"
+      title={t("Demand Prediction")}
+      description={t("AI-powered 7-day demand forecast with confidence intervals and prediction drivers")}
     >
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm flex items-center gap-2">
@@ -111,12 +111,12 @@ export default function DemandPrediction() {
         </div>
         {product.unit && (
           <span className="text-gray-400 text-xs bg-gray-100 px-3 py-1.5 rounded-lg">
-            Unit: <strong>{product.unit}</strong>
+            {t("Unit")}: <strong>{product.unit}</strong>
           </span>
         )}
         {product.current_stock !== undefined && (
           <span className="text-gray-400 text-xs bg-gray-100 px-3 py-1.5 rounded-lg">
-            In stock: <strong>{fmt(product.current_stock, 0)} {product.unit}</strong>
+            {t("In stock:")} <strong>{fmt(product.current_stock, 0)} {product.unit}</strong>
           </span>
         )}
       </div>
@@ -138,7 +138,7 @@ export default function DemandPrediction() {
           label={t("AI Demand Forecast")}
           value={loading ? "—" : `${fmt(kpis.total_forecast_7d, 0)}`}
           unit={product.unit}
-          trendLabel="next 7 days"
+          trendLabel={t("next 7 days")}
           iconBg="bg-blue-50"
           iconColor="text-blue-500"
           loading={loading}
@@ -156,7 +156,7 @@ export default function DemandPrediction() {
           label={t("Recommended Reorder")}
           value={loading ? "—" : `${fmt(kpis.recommended_order, 0)}`}
           unit={product.unit}
-          trendLabel="to meet demand + safety stock"
+          trendLabel={t("to meet demand + safety stock")}
           iconBg="bg-green-50"
           iconColor="text-brand-mid"
           loading={loading}
@@ -244,30 +244,30 @@ export default function DemandPrediction() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         {/* 7-day Forecast bar */}
         <div className="content-card">
-          <h3 className="font-semibold text-gray-800 text-sm mb-1">7-Day Forecast — {product.name}</h3>
-          <p className="text-gray-400 text-xs mb-3">Daily predicted demand in {product.unit}</p>
+          <h3 className="font-semibold text-gray-800 text-sm mb-1">{t("7-Day Forecast")} — {product.name}</h3>
+          <p className="text-gray-400 text-xs mb-3">{t("Daily predicted demand in")} {product.unit}</p>
           {loading ? (
             <div className="skeleton h-48 rounded-xl" />
           ) : barData.length > 0 ? (
             <ForecastBar data={barData} height={200} />
           ) : (
             <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
-              Forecast not yet generated for this product.
+              {t("Forecast not yet generated for this product.")}
             </div>
           )}
         </div>
 
         {/* Top Predicted Products — all products ranked */}
         <div className="content-card">
-          <h3 className="font-semibold text-gray-800 text-sm mb-3">All Products — 7-Day Forecast Rank</h3>
+          <h3 className="font-semibold text-gray-800 text-sm mb-3">{t("All Products — 7-Day Forecast Rank")}</h3>
           <div className="overflow-x-auto w-full">
             <table className="data-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Product</th>
-                  <th className="text-right">7d Total</th>
-                  <th>Peak Day</th>
+                  <th>{t("Product")}</th>
+                  <th className="text-right">{t("7d Total")}</th>
+                  <th>{t("Peak Day")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -302,7 +302,7 @@ export default function DemandPrediction() {
                   : (
                     <tr>
                       <td colSpan={4} className="text-center text-gray-400 text-xs py-6">
-                        No forecast data yet.
+                        {t("No forecast data yet.")}
                       </td>
                     </tr>
                   )}
@@ -316,8 +316,8 @@ export default function DemandPrediction() {
       {/* ZONE 4 — AI Forecast Insight                                     */}
       {/* ══════════════════════════════════════════════════════════════════ */}
       <AIBanner
-        headline={insight || "Run the Prophet forecasting model to get your AI forecast insight for this product."}
-        detail={`${t("Forecast accuracy")}: ${fmt(kpis.avg_confidence_pct, 1)}% | ${t("Model")}: Prophet | ${t("Updated daily")}`}
+        headline={insight || t("Run the seasonal forecasting model to get your AI forecast insight for this product.")}
+        detail={`${t("Forecast accuracy")}: ${fmt(kpis.avg_confidence_pct, 1)}% | ${t("Method")}: ${t("seasonal time-series forecasting (Holt-Winters)")} | ${t("Updated daily")}`}
         priority="low"
         loading={loading}
       />

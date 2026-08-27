@@ -21,7 +21,7 @@ What it does
    - Loads 90-day sales per product
    - Runs a MAPE backtest (train on history before last 14 days, predict
      that window, compare to actuals) → real accuracy %, no hardcoding
-   - Fits Facebook Prophet (falls back to Holt-Winters if Prophet fails)
+    - Fits Holt-Winters (falls back to simple average if Holt-Winters fails)
    - Uses the BUSINESS-LEVEL max sale date as anchor so every product
      covers the exact same 7-day window regardless of individual skip days
    - Upserts 7 rows per product into the forecasts table
@@ -112,7 +112,7 @@ def run_for_business(business_id: str, business_name: str) -> None:
     print(f"\n▶  Clearing old forecasts for '{business_name}' ...")
     deleted = clear_forecasts(business_id)
     print(f"   {deleted} stale rows removed.")
-    print(f"▶  Running Prophet forecaster for '{business_name}' ...")
+    print(f"▶  Running Holt-Winters forecaster for '{business_name}' ...")
     results = run_forecasts_for_business(business_id)
     print_summary(results, business_name)
 
@@ -143,7 +143,7 @@ def get_all_businesses():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Regenerate Prophet AI forecasts and store results in the DB."
+        description="Regenerate Holt-Winters AI forecasts and store results in the DB."
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--business_id", metavar="UUID",

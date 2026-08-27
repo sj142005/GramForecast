@@ -4,7 +4,6 @@ from datetime import date, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from groq import Groq
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -14,6 +13,7 @@ from auth_utils import get_current_user
 from config import settings
 from database import get_db
 from forecast_runner import ensure_forecasts
+from llm_client import create_chat_completion
 
 router = APIRouter()
 
@@ -31,6 +31,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+    model: str = ""
 
 
 def _shop_context(db: Session, business_id) -> str:
@@ -124,8 +125,7 @@ def chat(
 
     try:
         context = _shop_context(db, current_user.business_id)
-        completion = Groq(api_key=settings.GROQ_API_KEY).chat.completions.create(
-            model=settings.GROQ_MODEL,
+        completion, model_used = create_chat_completion(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "system", "content": f"Current shop data:\n{context}"},
@@ -140,4 +140,4 @@ def chat(
 
     if not reply:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="AI returned an empty response")
-    return ChatResponse(reply=reply)
+    return ChatResponse(reply=reply, model=model_used)

@@ -6,9 +6,11 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Leaf, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Login() {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate  = useNavigate();
   const [mobile,   setMobile]   = useState("+919876543210");
   const [password, setPassword] = useState("Demo@12345");
@@ -24,7 +26,7 @@ export default function Login() {
       await login(mobile, password);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.detail || "Invalid credentials. Please try again.");
+      setError(err.response?.data?.detail || t("Invalid credentials. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -44,14 +46,14 @@ export default function Login() {
           </div>
           <div>
             <p className="text-white font-bold text-lg leading-tight">RuralDemand AI</p>
-            <p className="text-green-300/80 text-xs">Smarter Forecasts. Stronger Rural Businesses.</p>
+            <p className="text-green-300/80 text-xs">{t("Smarter Forecasts. Stronger Rural Businesses.")}</p>
           </div>
         </div>
 
         {/* Hero text */}
         <div>
           <h2 className="text-white font-bold text-4xl leading-tight mb-6">
-            Know what to stock<br />before demand peaks.
+            {t("Know what to stock before demand peaks.")}
           </h2>
           <ul className="space-y-4">
             {[
@@ -62,8 +64,8 @@ export default function Login() {
               <li key={item.title} className="flex items-start gap-3">
                 <span className="text-2xl">{item.icon}</span>
                 <div>
-                  <p className="text-white font-semibold text-sm">{item.title}</p>
-                  <p className="text-green-200/70 text-xs leading-relaxed">{item.desc}</p>
+                  <p className="text-white font-semibold text-sm">{t(item.title)}</p>
+                  <p className="text-green-200/70 text-xs leading-relaxed">{t(item.desc)}</p>
                 </div>
               </li>
             ))}
@@ -74,8 +76,8 @@ export default function Login() {
         <div className="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-3 border border-white/10">
           <span className="text-xl">🔒</span>
           <div>
-            <p className="text-white text-xs font-semibold">Secure & Trusted</p>
-            <p className="text-green-300/70 text-[10px]">Your business data is private and encrypted.</p>
+            <p className="text-white text-xs font-semibold">{t("Secure & Trusted")}</p>
+            <p className="text-green-300/70 text-[10px]">{t("Your business data is private and encrypted.")}</p>
           </div>
         </div>
       </div>
@@ -91,8 +93,8 @@ export default function Login() {
             <p className="text-gray-900 font-bold text-lg">RuralDemand AI</p>
           </div>
 
-          <h1 className="text-gray-900 font-bold text-2xl mb-1">Welcome back</h1>
-          <p className="text-gray-500 text-sm mb-6">Sign in to your business account.</p>
+          <h1 className="text-gray-900 font-bold text-2xl mb-1">{t("Welcome back")}</h1>
+          <p className="text-gray-500 text-sm mb-6">{t("Sign in to your business account.")}</p>
 
           {error && (
             <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
@@ -103,31 +105,31 @@ export default function Login() {
 
           {/* Demo credentials notice */}
           <div className="mb-4 bg-brand-lighter border border-brand-light rounded-xl px-4 py-3 text-brand-dark text-xs">
-            <strong>Demo credentials pre-filled</strong> — click Sign In to explore.
+            <strong>{t("Demo credentials pre-filled")}</strong> — {t("click Sign In to explore.")}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Mobile Number</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Mobile Number")}</label>
               <input
                 id="login-mobile"
                 type="tel"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
-                placeholder="+91 9876543210"
+                placeholder={t("+91 9876543210")}
                 required
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white"
               />
             </div>
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1.5">Password</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1.5">{t("Password")}</label>
               <div className="relative">
                 <input
                   id="login-password"
                   type={showPw ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Your password"
+                  placeholder={t("Your password")}
                   required
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-brand-mid bg-white"
                 />
@@ -147,13 +149,13 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-brand-mid hover:bg-brand-dark text-white font-semibold py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? t("Signing in...") : t("Sign In")}
             </button>
           </form>
 
           <p className="text-center text-gray-400 text-xs mt-6">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-brand-mid font-semibold hover:underline">Sign up free</Link>
+            {t("Don't have an account?")}{" "}
+            <Link to="/signup" className="text-brand-mid font-semibold hover:underline">{t("Sign up free")}</Link>
           </p>
         </div>
       </div>

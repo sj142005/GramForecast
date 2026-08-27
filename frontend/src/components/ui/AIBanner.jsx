@@ -52,8 +52,8 @@ export default function AIBanner({ headline, detail, priority = "default", loadi
             <p className={clsx("text-xs font-semibold uppercase tracking-wider mb-1", cfg.iconCls)}>
               🤖 {t(cfg.label)}
             </p>
-            <p className="text-gray-900 font-semibold text-sm leading-snug mb-1">{headline}</p>
-            {detail && <p className="text-gray-500 text-xs leading-relaxed">{detail}</p>}
+            <p className="text-gray-900 font-semibold text-sm leading-snug mb-1">{t(headline)}</p>
+            {detail && <p className="text-gray-500 text-xs leading-relaxed">{t(detail)}</p>}
           </div>
         </div>
       </div>

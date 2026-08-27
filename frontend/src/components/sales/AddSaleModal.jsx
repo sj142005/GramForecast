@@ -18,6 +18,13 @@ const PRODUCT_ALIASES = {
   turmeric: "Turmeric",
   "chana dal": "Gram Dal",
   "gram dal": "Gram Dal",
+  तांदूळ: "Rice",
+  भात: "Rice",
+  साखर: "Sugar",
+  कांदा: "Onion (Kanda)",
+  गहू: "Wheat Flour",
+  हळद: "Turmeric Powder",
+  "मोहरी तेल": "Mustard Oil",
   cheeni: "Sugar",
   sugar: "Sugar",
 };
@@ -28,6 +35,8 @@ const NUMBER_WORDS = {
   fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
   nineteen: 19, twenty: 20, bees: 20, tees: 30, chaalis: 40, pachaas: 50,
   दस: 10, बीस: 20, तीस: 30, चालीस: 40, पचास: 50,
+  एक: 1, दोन: 2, तीन: 3, चार: 4, पाच: 5, सहा: 6, सात: 7, आठ: 8, नऊ: 9,
+  छह: 6, सात: 7, आठ: 8, नौ: 9, ग्यारह: 11, बारह: 12,
 };
 
 const parseSalePhrase = (phrase, products) => {
@@ -55,8 +64,9 @@ export default function AddSaleModal({ isOpen, onClose, onSuccess }) {
   const [listening, setListening] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [voiceSupported, setVoiceSupported] = useState(false);
   const recognitionRef = useRef(null);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -68,10 +78,15 @@ export default function AddSaleModal({ isOpen, onClose, onSuccess }) {
         setProductId(active[0].id);
         setPrice(active[0].selling_price || "");
       }
-    }).catch(() => setError("Products could not be loaded."));
+    }).catch(() => setError(t("Products could not be loaded.")));
   }, [isOpen]);
 
   useEffect(() => () => recognitionRef.current?.stop(), []);
+
+  useEffect(() => {
+    const supported = typeof window !== "undefined" && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+    setVoiceSupported(supported);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -82,9 +97,10 @@ export default function AddSaleModal({ isOpen, onClose, onSuccess }) {
   };
 
   const listen = () => {
-    const Recognition = window.webkitSpeechRecognition;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) {
-      setError("Voice entry needs Chrome on localhost or HTTPS.");
+      setVoiceSupported(false);
+      setError(t("Voice not supported, type instead."));
       return;
     }
     if (listening) {
@@ -102,19 +118,34 @@ export default function AddSaleModal({ isOpen, onClose, onSuccess }) {
       const parsed = parseSalePhrase(text, products);
       if (parsed.product) selectProduct(parsed.product);
       if (parsed.quantity) setQuantity(parsed.quantity);
-      if (!parsed.product || !parsed.quantity) setError("I heard you, but please confirm product and quantity.");
+      if (!parsed.product || !parsed.quantity) setError(t("I heard you, but please confirm product and quantity."));
     };
     recognition.onerror = (event) => {
+      setListening(false);
       if (language === "mr" && event.error === "language-not-supported" && recognition.lang === "mr-IN") {
-        recognition.lang = "hi-IN";
-        recognition.start();
+        try {
+          recognition.lang = "hi-IN";
+          recognition.start();
+        } catch {
+          setError(t("Voice entry did not catch that. Please try again."));
+        }
         return;
       }
-      setError("Voice entry did not catch that. Please try again.");
+      const message = event.error === "not-allowed" || event.error === "service-not-allowed"
+        ? "Microphone permission was denied. Type the sale instead."
+        : event.error === "no-speech"
+        ? "No speech detected. Please try again or type the sale."
+        : "Voice entry did not catch that. Please try again.";
+      setError(t(message));
     };
     recognition.onend = () => setListening(false);
     recognitionRef.current = recognition;
-    recognition.start();
+    try {
+      recognition.start();
+    } catch {
+      setListening(false);
+      setError(t("Microphone permission was denied. Type the sale instead."));
+    }
   };
 
   const submit = async (event) => {
@@ -140,7 +171,7 @@ export default function AddSaleModal({ isOpen, onClose, onSuccess }) {
       onSuccess?.();
       onClose();
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "Sale could not be saved.");
+      setError(requestError.response?.data?.detail || t("Sale could not be saved."));
     } finally {
       setSaving(false);
     }
@@ -150,27 +181,31 @@ export default function AddSaleModal({ isOpen, onClose, onSuccess }) {
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="add-sale-title">
       <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
-          <div><h2 id="add-sale-title" className="text-lg font-bold text-gray-900">+ Add Sale / बिक्री जोड़ें</h2><p className="text-xs text-gray-500">Tap a product or speak the sale</p></div>
-          <button type="button" onClick={onClose} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100" aria-label="Close add sale"><X className="h-5 w-5" /></button>
+          <div><h2 id="add-sale-title" className="text-lg font-bold text-gray-900">+ {t("Add Sale")}</h2><p className="text-xs text-gray-500">{t("Tap a product or speak the sale")}</p></div>
+          <button type="button" onClick={onClose} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100" aria-label={t("Close add sale")}><X className="h-5 w-5" /></button>
         </div>
-        <button type="button" onClick={listen} className={`mb-4 flex w-full items-center justify-center gap-3 rounded-xl border-2 px-4 py-4 text-sm font-semibold ${listening ? "border-red-300 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-800 hover:bg-green-100"}`}>
-          {listening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-          {listening ? "Listening... बोलिए" : "Tap to speak / बोलकर जोड़ें"}
-        </button>
-        {transcript && <p className="mb-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">Heard: <strong>{transcript}</strong></p>}
+        {voiceSupported ? (
+          <button type="button" onClick={listen} className={`mb-4 flex w-full items-center justify-center gap-3 rounded-xl border-2 px-4 py-4 text-sm font-semibold ${listening ? "border-red-300 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-800 hover:bg-green-100"}`}>
+            {listening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+            {listening ? <><span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />{t("Listening...")}</> : t("Tap to speak")}
+          </button>
+        ) : (
+          <p className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs text-gray-600">{t("Voice not supported, type instead.")}</p>
+        )}
+        {transcript && <p className="mb-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">{t("Heard:")} <strong>{transcript}</strong></p>}
         <form onSubmit={submit}>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Product</label>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">{t("Product")}</label>
           <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {products.map((item) => <button key={item.id} type="button" onClick={() => selectProduct(item)} className={`min-h-14 rounded-xl border px-2 py-2 text-sm font-semibold ${item.id === productId ? "border-brand-mid bg-green-50 text-green-800 ring-2 ring-green-100" : "border-gray-200 text-gray-700 hover:border-green-300"}`}>{item.name}</button>)}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs font-semibold text-gray-600">Quantity<input type="number" min="0.01" step="0.01" value={quantity} onChange={(event) => setQuantity(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-3 text-base" /></label>
-            <label className="text-xs font-semibold text-gray-600">Price / {selectedProduct?.unit || "unit"}<input type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-3 text-base" /></label>
+            <label className="text-xs font-semibold text-gray-600">{t("Quantity")}<input type="number" min="0.01" step="0.01" value={quantity} onChange={(event) => setQuantity(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-3 text-base" /></label>
+            <label className="text-xs font-semibold text-gray-600">{t("Price")} / {selectedProduct?.unit || t("unit")}<input type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-3 text-base" /></label>
           </div>
-          <label className="mt-3 block text-xs font-semibold text-gray-600">Payment mode<select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm"><option value="cash">Cash</option><option value="upi">UPI</option><option value="credit">Udhaar</option><option value="barter">Barter</option><option value="other">Other</option></select></label>
+          <label className="mt-3 block text-xs font-semibold text-gray-600">{t("Payment mode")}<select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm"><option value="cash">{t("Cash")}</option><option value="upi">UPI</option><option value="credit">{t("Udhaar")}</option><option value="barter">{t("Barter")}</option><option value="other">{t("Other")}</option></select></label>
           {selectedProduct && <p className="mt-3 flex items-center gap-1 text-xs text-gray-500"><CheckCircle2 className="h-4 w-4 text-green-600" /> {quantity} {selectedProduct.unit} {selectedProduct.name} = ₹{(Number(quantity || 0) * Number(price || 0)).toFixed(0)}</p>}
           {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
-          <button type="submit" disabled={saving || !selectedProduct} className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-mid px-4 py-3 text-sm font-bold text-white hover:bg-brand-dark disabled:opacity-50">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save Sale / बिक्री दर्ज करें</button>
+          <button type="submit" disabled={saving || !selectedProduct} className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-mid px-4 py-3 text-sm font-bold text-white hover:bg-brand-dark disabled:opacity-50">{saving && <Loader2 className="h-4 w-4 animate-spin" />} {t("Save Sale")}</button>
         </form>
       </div>
     </div>

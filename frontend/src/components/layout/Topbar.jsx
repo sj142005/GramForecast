@@ -27,7 +27,7 @@ export default function Topbar({ title, description, onMenuClick }) {
       <button 
         className="lg:hidden mr-3 p-2 -ml-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
         onClick={onMenuClick}
-        aria-label="Open Menu"
+        aria-label={t("Open Menu")}
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -42,7 +42,7 @@ export default function Topbar({ title, description, onMenuClick }) {
 
       {/* ── Right Controls ── */}
       <div className="flex items-center gap-4 ml-4">
-        <button type="button" onClick={() => setLanguage((current) => current === "en" ? "hi" : current === "hi" ? "mr" : "en")} className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100" aria-label="Toggle language">
+        <button type="button" onClick={() => setLanguage((current) => current === "en" ? "hi" : current === "hi" ? "mr" : "en")} className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100" aria-label={t("Toggle language")}>
           {language === "en" ? "हिंदी" : language === "hi" ? "मराठी" : "EN"}
         </button>
         {/* Date */}
@@ -69,7 +69,7 @@ export default function Topbar({ title, description, onMenuClick }) {
           </div>
           <div className="hidden md:block">
             <p className="text-gray-800 font-semibold text-xs leading-tight">{user?.name || "Ramesh Yadav"}</p>
-            <p className="text-gray-400 text-[10px]">Kirana Store</p>
+            <p className="text-gray-400 text-[10px]">{t("Kirana Store")}</p>
           </div>
           <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors" />
         </div>
@@ -78,7 +78,7 @@ export default function Topbar({ title, description, onMenuClick }) {
           type="button"
           onClick={handleLogout}
           className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-[11px] font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-          aria-label="Logout"
+          aria-label={t("Logout")}
         >
           <LogOut className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{t("Logout")}</span>

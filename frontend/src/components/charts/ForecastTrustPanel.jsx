@@ -9,7 +9,9 @@ export default function ForecastTrustPanel({ forecastData, loading = false, comp
   const accuracy = forecastData?.backtest?.accuracy_pct ?? forecastData?.kpis?.accuracy_pct ?? 0;
   const chartData = forecastData?.chart_data ?? [];
   const productName = forecastData?.product?.name || t("AI forecast");
-  const trustLine = language === "hi"
+  const trustLine = language === "mr"
+    ? `${forecastData?.backtest?.points?.length || 0} दिवसांच्या मागील डेटावर आमचा अंदाज ${formatAccuracy(accuracy)} अचूक ठरला`
+    : language === "hi"
     ? `पिछले ${forecastData?.backtest?.points?.length || 0} दिन में हमारा अनुमान ${formatAccuracy(accuracy)} सही रहा`
     : `Our forecast was ${formatAccuracy(accuracy)} accurate over the last ${forecastData?.backtest?.points?.length || 0} days`;
 
@@ -21,7 +23,7 @@ export default function ForecastTrustPanel({ forecastData, loading = false, comp
             <ShieldCheck className="h-5 w-5 text-brand-mid" />
             <h3 className="font-semibold text-gray-800 text-sm">{t("How accurate are we?")}</h3>
           </div>
-          <p className="mt-1 text-xs text-gray-400">{productName} · {t("Past predicted vs actual, with future confidence band")}</p>
+          <p className="mt-1 text-xs text-gray-400">{productName} · {t("seasonal time-series forecasting (Holt-Winters)")}</p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold tabular-nums text-brand-dark">{loading ? "—" : formatAccuracy(accuracy)}</p>

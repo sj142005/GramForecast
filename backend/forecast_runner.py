@@ -2,7 +2,7 @@
 In-process + HTTP forecast trigger used by the API.
 
 Prefers running ml-service/forecaster directly (local backend venv already
-has Prophet). Falls back to the ML HTTP service when the import is unavailable
+has Holt-Winters). Falls back to the ML HTTP service when the import is unavailable
 (e.g. Docker backend talking to gramforecast_ml).
 """
 
@@ -21,7 +21,7 @@ from sqlalchemy import func
 import models
 from config import settings
 
-FORECAST_MODEL_VERSION = "prophet_v2_festival"
+FORECAST_MODEL_VERSION = "holtwinters_v1_festival"
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ def generate_forecasts(business_id: str) -> dict:
     with _lock:
         try:
             from forecaster import run_forecasts_for_business
-            logger.info("Running in-process Prophet for business %s", business_id)
+            logger.info("Running in-process Holt-Winters forecast for business %s", business_id)
             return run_forecasts_for_business(str(business_id))
         except Exception as import_err:
             logger.warning("In-process forecast failed (%s); trying ML service", import_err)

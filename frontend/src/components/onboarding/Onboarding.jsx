@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { useTutorial } from "../../context/TutorialContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 const tourSteps = [
   {
@@ -42,19 +43,19 @@ const tourSteps = [
   },
 ];
 
-function startDriver(markTutorialSeen) {
+function startDriver(markTutorialSeen, t) {
   const tour = driver({
     showProgress: true,
     allowClose: true,
     animate: true,
-    nextBtnText: "Next",
-    prevBtnText: "Back",
-    doneBtnText: "Done",
+    nextBtnText: t("Next"),
+    prevBtnText: t("Back"),
+    doneBtnText: t("Done"),
     onPopoverRender: (popover) => {
       const skipButton = document.createElement("button");
       skipButton.type = "button";
       skipButton.className = "driver-skip-button";
-      skipButton.textContent = "Skip";
+      skipButton.textContent = t("Skip");
       skipButton.addEventListener("click", () => {
         markTutorialSeen();
         tour.destroy();
@@ -62,13 +63,21 @@ function startDriver(markTutorialSeen) {
       popover.footerButtons.prepend(skipButton);
     },
     onDestroyed: markTutorialSeen,
-    steps: tourSteps,
+    steps: tourSteps.map((step) => ({
+      ...step,
+      popover: {
+        ...step.popover,
+        title: t(step.popover.title),
+        description: t(step.popover.description),
+      },
+    })),
   });
 
   tour.drive();
 }
 
 export default function Onboarding() {
+  const { t } = useLanguage();
   const {
     user,
     hasSeenTutorial,
@@ -92,13 +101,13 @@ export default function Onboarding() {
   useEffect(() => {
     if (!replayRequested || !document.querySelector("#dashboard-kpi-cards")) return;
     clearReplayRequest();
-    const timeoutId = window.setTimeout(() => startDriver(markTutorialSeen), 150);
+    const timeoutId = window.setTimeout(() => startDriver(markTutorialSeen, t), 150);
     return () => window.clearTimeout(timeoutId);
-  }, [replayRequested, clearReplayRequest, markTutorialSeen]);
+  }, [replayRequested, clearReplayRequest, markTutorialSeen, t]);
 
   const startTutorial = () => {
     closeWelcome();
-    window.setTimeout(() => startDriver(markTutorialSeen), 150);
+    window.setTimeout(() => startDriver(markTutorialSeen, t), 150);
   };
 
   if (!welcomeOpen) return null;
@@ -106,17 +115,17 @@ export default function Onboarding() {
   return (
     <div className="onboarding-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="welcome-video-title">
       <div className="onboarding-modal">
-        <button className="onboarding-close" type="button" onClick={startTutorial} aria-label="Close welcome video">
+        <button className="onboarding-close" type="button" onClick={startTutorial} aria-label={t("Close welcome video")}>
           ×
         </button>
         <div className="welcome-video-placeholder">
           <div className="welcome-play-icon">▶</div>
-          <p>Video coming soon</p>
+          <p>{t("Video coming soon")}</p>
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-brand-mid">Welcome</p>
-        <h2 id="welcome-video-title" className="text-xl font-bold text-gray-900 mt-1">How to use RuralDemand AI in 60 seconds</h2>
-        <p className="text-sm text-gray-500 mt-2">Watch a quick guide to see your shop's next best step.</p>
-        <button type="button" className="onboarding-primary-button" onClick={startTutorial}>Start Tutorial</button>
+        <p className="text-xs font-semibold uppercase tracking-wider text-brand-mid">{t("Welcome")}</p>
+        <h2 id="welcome-video-title" className="text-xl font-bold text-gray-900 mt-1">{t("How to use RuralDemand AI in 60 seconds")}</h2>
+        <p className="text-sm text-gray-500 mt-2">{t("Watch a quick guide to see your shop's next best step.")}</p>
+        <button type="button" className="onboarding-primary-button" onClick={startTutorial}>{t("Start Tutorial")}</button>
       </div>
     </div>
   );

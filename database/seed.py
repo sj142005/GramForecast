@@ -22,6 +22,7 @@ Run: python seed.py
 import os
 import random
 import uuid
+import argparse
 from datetime import date, timedelta, datetime
 from decimal import Decimal
 
@@ -31,6 +32,8 @@ from passlib.hash import bcrypt
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 DATABASE_URL = os.environ["DATABASE_URL"]
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 SEED_DAYS = 90  # days of historical data
 END_DATE = date.today()  # newest transaction date = today
@@ -218,13 +221,35 @@ def generate_price(base_price: float, d: date) -> float:
 
 # ─── Main seeder ─────────────────────────────────────────────────────────────
 
-def main():
+def reset_demo_data(cur):
+    """Remove the known demo business and all rows owned by it."""
+    cur.execute("SELECT id FROM businesses WHERE phone = %s", ("+919876543210",))
+    row = cur.fetchone()
+    if not row:
+        return
+    business_id = row[0]
+    cur.execute("DELETE FROM sales WHERE business_id = %s", (business_id,))
+    cur.execute("DELETE FROM forecasts WHERE product_id IN (SELECT id FROM products WHERE business_id = %s)", (business_id,))
+    cur.execute("DELETE FROM inventory_snapshots WHERE product_id IN (SELECT id FROM products WHERE business_id = %s)", (business_id,))
+    cur.execute("DELETE FROM alerts WHERE business_id = %s", (business_id,))
+    cur.execute("DELETE FROM reports WHERE business_id = %s", (business_id,))
+    cur.execute("DELETE FROM credit_entries WHERE business_id = %s", (business_id,))
+    cur.execute("DELETE FROM products WHERE business_id = %s", (business_id,))
+    cur.execute("DELETE FROM users WHERE business_id = %s", (business_id,))
+    cur.execute("DELETE FROM businesses WHERE id = %s", (business_id,))
+
+
+def main(reset=False):
     print(f"🌱 Connecting to database: {DATABASE_URL[:50]}...")
     conn = psycopg2.connect(DATABASE_URL)
     conn.autocommit = False
     cur = conn.cursor()
 
     try:
+        if reset:
+            print("🧹 Resetting existing demo data...")
+            reset_demo_data(cur)
+
         print("🏢 Creating business (idempotent)...")
         business_id = str(uuid.uuid4())
         cur.execute(
@@ -490,6 +515,19 @@ def main():
         print(f"   Password    : Demo@12345")
         print(f"   Products    : {len(PRODUCTS)}")
         print(f"   Sales rows  : {len(sales_rows)}")
+        cur.execute("SELECT COUNT(*) FROM inventory_snapshots WHERE product_id IN (SELECT id FROM products WHERE business_id = %s)", (business_id,))
+        inventory_count = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM alerts WHERE business_id = %s", (business_id,))
+        alert_count = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM reports WHERE business_id = %s", (business_id,))
+        report_count = cur.fetchone()[0]
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE business_id = %s AND sale_date >= %s", (business_id, END_DATE - timedelta(days=6)))
+        sales_7d = float(cur.fetchone()[0] or 0)
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE business_id = %s AND sale_date >= %s", (business_id, END_DATE - timedelta(days=29)))
+        sales_30d = float(cur.fetchone()[0] or 0)
+        print(f"   Seed range  : {START_DATE} -> {END_DATE}")
+        print(f"   Inventory   : {inventory_count} | Alerts: {alert_count} | Reports: {report_count}")
+        print(f"   Sales value : last 7 days ₹{sales_7d:.2f} | last 30 days ₹{sales_30d:.2f}")
 
         print("\n🤖 Generating AI forecasts (Prophet)...")
         try:
@@ -560,6 +598,7 @@ def main():
                 (business_id,),
             )
             rows = cur.fetchall()
+            forecast_count = sum(days for _, days, _, _ in rows)
             print(f"   ✓ Forecasts stored for {len(rows)}/{len(PRODUCTS)} products:")
             overall_num   = 0.0
             overall_denom = 0.0
@@ -571,6 +610,7 @@ def main():
                 overall_denom += tot
             if overall_denom:
                 print(f"   Overall MAPE-based accuracy: {overall_num / overall_denom:.1f}%")
+            print(f"   Forecast rows: {forecast_count}")
 
         except Exception as ml_err:
             print(f"   ⚠️  Could not run forecast: {ml_err}")
@@ -589,4 +629,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Seed the relative-date demo dataset")
+    parser.add_argument("--reset", action="store_true", help="delete and recreate the demo business data")
+    main(reset=parser.parse_args().reset)

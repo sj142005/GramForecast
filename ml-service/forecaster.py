@@ -32,6 +32,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.environ["DATABASE_URL"]
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 FORECAST_HORIZON = 7  # days
 BACKTEST_DAYS    = 14
@@ -81,7 +83,8 @@ INDIAN_HOLIDAYS = festival_calendar()
 
 
 def _connect():
-    return psycopg2.connect(DATABASE_URL)
+    connect_args = {"sslmode": "require"} if DATABASE_URL.startswith("postgresql://") else {}
+    return psycopg2.connect(DATABASE_URL, **connect_args)
 
 
 # ─── Data loading ─────────────────────────────────────────────────────────────

@@ -5,19 +5,22 @@ Entrypoint. Mounts all routers and configures CORS, middleware, and lifespan.
 """
 
 from contextlib import asynccontextmanager
+import logging
 from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from database import engine, Base
+from database import engine, Base, get_db
 from sqlalchemy import text
 from routers import auth, dashboard, forecast, products, sales, inventory, alerts, market, ai, assistant, notify, credit, settings as settings_router
 from llm_client import _is_model_access_error, create_chat_completion
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -62,7 +65,12 @@ app = FastAPI(
 # ─── CORS ────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS.split(","),
+    allow_origins=[
+        origin.strip()
+        for origin in [*settings.CORS_ORIGINS.split(","), "http://localhost:5173", "http://localhost:3000"]
+        if origin.strip()
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,5 +113,9 @@ def health_check():
 
 
 @app.get("/api/health")
-def api_health_check():
-    return {"status": "ok", "service": "RuralDemand AI Backend"}
+def api_health_check(db=Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail={"status": "error", "db": type(exc).__name__}) from exc
+    return {"status": "ok", "db": "connected"}

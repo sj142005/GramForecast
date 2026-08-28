@@ -22,7 +22,13 @@ def get_all_product_forecasts(
 ):
     """7-day forecasts for all products in this business (for DemandPrediction overview)."""
     business_id = current_user.business_id
-    ensure_forecasts(db, business_id)
+    try:
+        ensure_forecasts(db, business_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Forecast generation unavailable: {type(exc).__name__}",
+        ) from exc
     latest_sale = db.query(func.max(models.Sale.sale_date)).filter(models.Sale.business_id == business_id).scalar()
     today       = latest_sale + timedelta(days=1) if latest_sale else date.today()
     next_7      = today + timedelta(days=7)
@@ -111,7 +117,13 @@ def get_product_forecast(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    ensure_forecasts(db, current_user.business_id)
+    try:
+        ensure_forecasts(db, current_user.business_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Forecast generation unavailable: {type(exc).__name__}",
+        ) from exc
 
     latest_sale = db.query(func.max(models.Sale.sale_date)).filter(models.Sale.product_id == product_id).scalar()
     today   = latest_sale + timedelta(days=1) if latest_sale else date.today()

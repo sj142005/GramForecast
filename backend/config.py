@@ -1,5 +1,7 @@
 """Application configuration via environment variables."""
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
@@ -8,8 +10,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
-    ML_SERVICE_URL: str = "http://localhost:8001"
+    CORS_ORIGINS: str = ""
+    ML_SERVICE_URL: str = "http://ml-service:8001"
     GROQ_API_KEY: str
     GROQ_MODEL: str = "openai/gpt-oss-20b"
     GROQ_FALLBACK_MODEL: str = "llama-3.1-8b-instant"
@@ -19,7 +21,7 @@ class Settings(BaseSettings):
     TWILIO_WHATSAPP_FROM: str = ""
 
     class Config:
-        env_file = ".env"
+        env_file = Path(__file__).resolve().parent.parent / ".env"
         extra = "ignore"
 
 
